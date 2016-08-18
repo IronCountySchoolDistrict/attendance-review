@@ -146,7 +146,7 @@ SELECT lastfirst,MAX(pdata),
   max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+4, attdata,	null)) as att4day,
   max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+5, attdata,	null)) as att5day
 FROM
-(SELECT lastfirst,date_value,to_char(replace(wm_concat(meetingexp),',','<br />')) as pdata, to_char(replace(wm_concat(attdata),',','<br />')) as attdata
+(SELECT lastfirst,date_value,to_char(listagg(meetingexp, '<br />') within group(order by meetingexp)) as pdata, to_char(listagg(attdata, '<br />') within group(order by attdata)) as attdata
 FROM(
 	SELECT
 	  s.lastfirst,

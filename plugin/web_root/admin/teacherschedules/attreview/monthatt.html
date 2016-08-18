@@ -102,12 +102,15 @@ $(function(){
 [else#pageaction]
 <div align="center" class="datenav noprint">
 ~[tlist_sql;
-SELECT
- level-1 AS d,
- to_char(add_months(trunc(to_date('~(firstday)', 'mm/dd/yyyy'), 'MM'), 1*Level -1), 'MON YY') AS m
-  FROM dual
-  CONNECT BY Level <= MONTHS_BETWEEN(to_date('~(lastday)', 'mm/dd/yyyy'), to_date('~(firstday)', 'mm/dd/yyyy')) + 1
-  ORDER BY level
+	SELECT
+		level - 1                                                                                       AS d,
+		to_char(add_months(trunc(to_date('~(firstday)', 'mm/dd/yyyy'), 'MM'), 1 * level - 1), 'MON YY') AS m
+	FROM
+		dual
+	CONNECT BY
+		level <= MONTHS_BETWEEN(to_date('~(lastday)', 'mm/dd/yyyy'), to_date('~(firstday)', 'mm/dd/yyyy')) + 1
+	ORDER BY
+		level
 ]
 <span style="color:#333333;" class="~(d;t;if.test=0;then=hidden;else=)"> | </span>
 <span class="~(d;t;if.test=~[gpv:d];then=bold;else=;)" style="cursor:pointer;" onclick="navtest('~(d)', '~[gpv:frn]');">~(m)</span>
@@ -120,13 +123,20 @@ SELECT
 <th>Student</th>
 <th>Meeting</th>
 ~[tlist_sql;
-SELECT
- CASE WHEN to_char(date_value, 'D') IN (1,7) THEN 'weekend' ELSE 'weekday' END as class,
- to_char(date_value, 'FMMM/DD') as d,
- to_char(date_value, 'DY') as n
-FROM calendar_day cd
-WHERE schoolid=~(curschoolid) AND to_char(date_value, 'MM/YY') =to_char(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]), 'MM/YY')
-order by date_value
+	SELECT
+		CASE
+		WHEN to_char(date_value, 'D') IN (1, 7)
+			THEN 'weekend'
+		ELSE 'weekday' END             AS class,
+		to_char(date_value, 'FMMM/DD') AS d,
+		to_char(date_value, 'DY')      AS n
+	FROM
+		calendar_day
+	WHERE
+		schoolid =~(curschoolid) AND
+		to_char(date_value, 'MM/YY') = to_char(add_months(to_date('~(firstday)', 'mm/dd/yyyy'), ~[gpv:d]), 'MM/YY')
+	ORDER BY
+		date_value
 ;nonemessage=<th>No School Days for this month</th>]
 <th class='~(class)'>~(d)<br />~(n)</th>
 [/tlist_sql]
@@ -134,68 +144,246 @@ order by date_value
 </thead>
 <tbody>
 ~[tlist_sql;
-SELECT lastfirst,MAX(pdata),
-  max(CASE WHEN doffset=0 THEN cname ELSE null END) as c1, max(CASE WHEN doffset=0 THEN attdata ELSE null END) as d1,
-  max(CASE WHEN doffset=1 THEN cname ELSE null END) as c2, max(CASE WHEN doffset=1 THEN attdata ELSE null END) as d2,
-  max(CASE WHEN doffset=2 THEN cname ELSE null END) as c3, max(CASE WHEN doffset=2 THEN attdata ELSE null END) as d3,
-  max(CASE WHEN doffset=3 THEN cname ELSE null END) as c4, max(CASE WHEN doffset=3 THEN attdata ELSE null END) as d4,
-  max(CASE WHEN doffset=4 THEN cname ELSE null END) as c5, max(CASE WHEN doffset=4 THEN attdata ELSE null END) as d5,
-  max(CASE WHEN doffset=5 THEN cname ELSE null END) as c6, max(CASE WHEN doffset=5 THEN attdata ELSE null END) as d6,
-  max(CASE WHEN doffset=6 THEN cname ELSE null END) as c7, max(CASE WHEN doffset=6 THEN attdata ELSE null END) as d7,
-  max(CASE WHEN doffset=7 THEN cname ELSE null END) as c8, max(CASE WHEN doffset=7 THEN attdata ELSE null END) as d8,
-  max(CASE WHEN doffset=8 THEN cname ELSE null END) as c9, max(CASE WHEN doffset=8 THEN attdata ELSE null END) as d9,
-  max(CASE WHEN doffset=9 THEN cname ELSE null END) as c10, max(CASE WHEN doffset=9 THEN attdata ELSE null END) as d10,
-  max(CASE WHEN doffset=10 THEN cname ELSE null END) as c11, max(CASE WHEN doffset=10 THEN attdata ELSE null END) as d11,
-  max(CASE WHEN doffset=11 THEN cname ELSE null END) as c12, max(CASE WHEN doffset=11 THEN attdata ELSE null END) as d12,
-  max(CASE WHEN doffset=12 THEN cname ELSE null END) as c13, max(CASE WHEN doffset=12 THEN attdata ELSE null END) as d13,
-  max(CASE WHEN doffset=13 THEN cname ELSE null END) as c14, max(CASE WHEN doffset=13 THEN attdata ELSE null END) as d14,
-  max(CASE WHEN doffset=14 THEN cname ELSE null END) as c15, max(CASE WHEN doffset=14 THEN attdata ELSE null END) as d15,
-  max(CASE WHEN doffset=15 THEN cname ELSE null END) as c16, max(CASE WHEN doffset=15 THEN attdata ELSE null END) as d16,
-  max(CASE WHEN doffset=16 THEN cname ELSE null END) as c17, max(CASE WHEN doffset=16 THEN attdata ELSE null END) as d17,
-  max(CASE WHEN doffset=17 THEN cname ELSE null END) as c18, max(CASE WHEN doffset=17 THEN attdata ELSE null END) as d18,
-  max(CASE WHEN doffset=18 THEN cname ELSE null END) as c19, max(CASE WHEN doffset=18 THEN attdata ELSE null END) as d19,
-  max(CASE WHEN doffset=19 THEN cname ELSE null END) as c20, max(CASE WHEN doffset=19 THEN attdata ELSE null END) as d20,
-  max(CASE WHEN doffset=20 THEN cname ELSE null END) as c21, max(CASE WHEN doffset=20 THEN attdata ELSE null END) as d21,
-  max(CASE WHEN doffset=21 THEN cname ELSE null END) as c22, max(CASE WHEN doffset=21 THEN attdata ELSE null END) as d22,
-  max(CASE WHEN doffset=22 THEN cname ELSE null END) as c23, max(CASE WHEN doffset=22 THEN attdata ELSE null END) as d23,
-  max(CASE WHEN doffset=23 THEN cname ELSE null END) as c24, max(CASE WHEN doffset=23 THEN attdata ELSE null END) as d24,
-  max(CASE WHEN doffset=24 THEN cname ELSE null END) as c25, max(CASE WHEN doffset=24 THEN attdata ELSE null END) as d25,
-  max(CASE WHEN doffset=25 THEN cname ELSE null END) as c26, max(CASE WHEN doffset=25 THEN attdata ELSE null END) as d26,
-  max(CASE WHEN doffset=26 THEN cname ELSE null END) as c27, max(CASE WHEN doffset=26 THEN attdata ELSE null END) as d27,
-  max(CASE WHEN doffset=27 THEN cname ELSE null END) as c28, max(CASE WHEN doffset=27 THEN attdata ELSE null END) as d28,
-  max(CASE WHEN doffset=28 THEN cname ELSE null END) as c29, max(CASE WHEN doffset=28 THEN attdata ELSE null END) as d29,
-  max(CASE WHEN doffset=29 THEN cname ELSE null END) as c30, max(CASE WHEN doffset=29 THEN attdata ELSE null END) as d30,
-  max(CASE WHEN doffset=30 THEN cname ELSE null END) as c31, max(CASE WHEN doffset=30 THEN attdata ELSE null END) as d31
-FROM
-(SELECT lastfirst,MAX(cname) AS cname, doffset,to_char(replace(wm_concat(meetingexp),',','<br />')) as pdata, to_char(replace(wm_concat(attdata),',','<br />')) as attdata
- FROM(
-  SELECT
-	s.lastfirst,
-	CASE WHEN to_char(cd.date_value, 'D') IN (1,7) THEN 'weekend' ELSE 'weekday' END as cname,
-	cd.date_value - TRUNC(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]), 'MM') AS doffset,
-	(CASE
-		WHEN  (cc.dateenrolled > cd.date_value) OR (cc.dateleft <= cd.date_value) THEN 'N/E'
-		WHEN cd.insession = 0 THEN 'N/S'
-		WHEN cyd.letter <> sm.cycle_day_letter THEN  'N/C'
-		ELSE NVL(ac.att_code,'&nbsp;')
-	  END) AS attdata,
-	sm.meeting AS meetingexp
-	FROM calendar_day cd
-	JOIN cc ON cc.schoolid = cd.schoolid
-	JOIN students s ON s.id = cc.studentid
-	JOIN section_meeting sm ON sm.sectionid = cc.sectionid
-	JOIN period p ON p.period_number = sm.period_number AND p.schoolid = sm.schoolid AND p.year_id = sm.year_id
-	LEFT JOIN cycle_day cyd ON cyd.id = cd.cycle_day_id
-	LEFT JOIN attendance att ON att.ccid = cc.id AND att.calendar_dayid = cd.id AND att.periodid = p.id
-	LEFT JOIN attendance_code ac ON ac.id = att.attendance_codeid
-	WHERE  cd.date_value BETWEEN TRUNC(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]), 'MM') AND last_day(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]))
-	AND cc.sectionid = ~[gpv:sectionid]
-	order by p.period_number
-	)
-Group BY lastfirst, doffset
-)
-Group BY lastfirst
-order by lastfirst
+	SELECT
+		lastfirst,
+		MAX(pdata),
+		max(CASE WHEN doffset = 0
+			THEN cname
+				ELSE NULL END) AS c1,
+		max(CASE WHEN doffset = 0
+			THEN attdata
+				ELSE NULL END) AS d1,
+		max(CASE WHEN doffset = 1
+			THEN cname
+				ELSE NULL END) AS c2,
+		max(CASE WHEN doffset = 1
+			THEN attdata
+				ELSE NULL END) AS d2,
+		max(CASE WHEN doffset = 2
+			THEN cname
+				ELSE NULL END) AS c3,
+		max(CASE WHEN doffset = 2
+			THEN attdata
+				ELSE NULL END) AS d3,
+		max(CASE WHEN doffset = 3
+			THEN cname
+				ELSE NULL END) AS c4,
+		max(CASE WHEN doffset = 3
+			THEN attdata
+				ELSE NULL END) AS
+													d4,
+		max(CASE WHEN doffset = 4
+			THEN cname
+				ELSE NULL END) AS c5,
+		max(CASE WHEN doffset = 4
+			THEN attdata
+				ELSE NULL END) AS d5,
+		max(CASE WHEN doffset = 5
+			THEN cname
+				ELSE NULL END) AS c6,
+		max(CASE WHEN doffset = 5
+			THEN attdata
+				ELSE NULL END) AS d6,
+		max(CASE WHEN
+			doffset = 6
+			THEN cname
+				ELSE NULL END) AS c7,
+		max(CASE WHEN doffset = 6
+			THEN attdata
+				ELSE NULL END) AS d7,
+		max(CASE WHEN doffset = 7
+			THEN cname
+				ELSE NULL END) AS c8,
+		max(CASE WHEN doffset = 7
+			THEN attdata
+				ELSE NULL END) AS d8,
+		max(CASE WHEN doffset = 8
+			THEN cname
+				ELSE NULL END) AS c9,
+		max(CASE WHEN doffset = 8
+			THEN attdata
+				ELSE NULL END) AS d9,
+		max(CASE WHEN doffset = 9
+			THEN cname
+				ELSE NULL END) AS c10,
+		max(CASE WHEN doffset = 9
+			THEN attdata
+				ELSE NULL END) AS d10,
+		max(CASE WHEN doffset = 10
+			THEN cname
+				ELSE NULL END)
+											 AS c11,
+		max(CASE WHEN doffset = 10
+			THEN attdata
+				ELSE NULL END) AS d11,
+		max(CASE WHEN doffset = 11
+			THEN cname
+				ELSE NULL END) AS c12,
+		max(CASE WHEN doffset = 11
+			THEN attdata
+				ELSE NULL END) AS d12,
+		max(CASE WHEN doffset = 12
+			THEN cname
+				ELSE NULL END) AS c13,
+		max(CASE
+				WHEN doffset = 12
+					THEN attdata
+				ELSE NULL END) AS d13,
+		max(CASE WHEN doffset = 13
+			THEN cname
+				ELSE NULL END) AS c14,
+		max(CASE WHEN doffset = 13
+			THEN attdata
+				ELSE NULL END) AS d14,
+		max(CASE WHEN doffset = 14
+			THEN cname
+				ELSE NULL END) AS c15,
+		max(CASE WHEN doffset = 14
+			THEN attdata
+				ELSE NULL END) AS d15,
+		max(CASE WHEN doffset = 15
+			THEN cname
+				ELSE NULL END) AS c16,
+		max(CASE WHEN doffset = 15
+			THEN attdata
+				ELSE NULL END) AS d16,
+		max(CASE WHEN doffset = 16
+			THEN cname
+				ELSE NULL END) AS c17,
+		max(CASE WHEN doffset = 16
+			THEN attdata
+				ELSE NULL END) AS d17,
+		max(CASE WHEN doffset = 17
+			THEN cname
+				ELSE NULL END) AS c18,
+		max(CASE WHEN doffset = 17
+			THEN attdata
+				ELSE NULL END) AS d18,
+		max(CASE WHEN doffset = 18
+			THEN cname
+				ELSE NULL END) AS c19,
+		max(CASE WHEN doffset = 18
+			THEN attdata
+				ELSE NULL
+				END)           AS d19,
+		max(CASE WHEN doffset = 19
+			THEN cname
+				ELSE NULL END) AS c20,
+		max(CASE WHEN doffset = 19
+			THEN attdata
+				ELSE NULL END) AS d20,
+		max(CASE WHEN doffset = 20
+			THEN cname
+				ELSE NULL END) AS c21,
+		max(CASE WHEN doffset = 20
+			THEN attdata
+				ELSE NULL END) AS d21,
+		max(CASE WHEN doffset = 21
+			THEN cname
+				ELSE NULL END) AS c22,
+		max(CASE WHEN doffset = 21
+			THEN attdata
+				ELSE NULL END) AS d22,
+		max(CASE WHEN doffset = 22
+			THEN cname
+				ELSE NULL END) AS c23,
+		max(CASE WHEN doffset = 22
+			THEN attdata
+				ELSE NULL END) AS d23,
+		max(CASE
+				WHEN doffset = 23
+					THEN cname
+				ELSE NULL END) AS c24,
+		max(CASE WHEN doffset = 23
+			THEN attdata
+				ELSE NULL END) AS d24,
+		max(CASE WHEN doffset = 24
+			THEN cname
+				ELSE NULL END) AS c25,
+		max(CASE WHEN doffset = 24
+			THEN attdata
+				ELSE NULL END) AS d25,
+		max(CASE WHEN doffset = 25
+			THEN cname
+				ELSE NULL END) AS c26,
+		max(CASE WHEN doffset = 25
+			THEN attdata
+				ELSE NULL END) AS d26,
+		max(CASE WHEN doffset = 26
+			THEN cname
+				ELSE NULL END) AS c27,
+		max(CASE WHEN doffset = 26
+			THEN attdata
+				ELSE NULL END) AS d27,
+		max(CASE WHEN doffset = 27
+			THEN cname
+				ELSE NULL END) AS c28,
+		max(CASE WHEN doffset = 27
+			THEN attdata
+				ELSE NULL END) AS d28,
+		max(CASE WHEN doffset = 28
+			THEN cname
+				ELSE NULL END) AS c29,
+		max(CASE WHEN doffset = 28
+			THEN attdata
+				ELSE NULL END) AS d29,
+		max(CASE WHEN doffset = 29
+			THEN cname
+				ELSE NULL
+				END)           AS c30,
+		max(CASE WHEN doffset = 29
+			THEN attdata
+				ELSE NULL END) AS d30,
+		max(CASE WHEN doffset = 30
+			THEN cname
+				ELSE NULL END) AS c31,
+		max(CASE WHEN doffset = 30
+			THEN attdata
+				ELSE NULL END) AS d31
+	FROM (
+		SELECT
+			lastfirst,
+			MAX(cname)                      AS cname,
+			doffset,
+			to_char(listagg(meetingexp, '<br />')
+							WITHIN GROUP (
+								ORDER BY meetingexp)) AS pdata,
+			to_char(listagg(attdata, '<br />')
+							WITHIN GROUP (
+								ORDER BY attdata))    AS attdata
+		FROM (
+			SELECT
+				s.lastfirst,
+				CASE WHEN to_char(cd.date_value, 'D') IN (1, 7)
+					THEN 'weekend'
+				ELSE 'weekday' END                                                          AS cname,
+				cd.date_value -
+				TRUNC(add_months(to_date('~(firstday)', 'mm/dd/yyyy'), ~[gpv:d]), 'MM') AS doffset,
+				(CASE WHEN (cc.dateenrolled
+										> cd.date_value) OR (cc.dateleft <= cd.date_value)
+					THEN 'N/E'
+				 WHEN cd.insession = 0
+					 THEN 'N/S'
+				 WHEN cyd.letter <> sm.cycle_day_letter
+					 THEN 'N/C'
+				 ELSE NVL(ac.att_code, '&nbsp;') END)                                       AS attdata,
+				sm.meeting                                                                  AS meetingexp
+			FROM calendar_day cd
+				JOIN cc ON cc.schoolid = cd.schoolid
+				JOIN students s ON s.id = cc.studentid
+				JOIN section_meeting sm ON sm.sectionid = cc.sectionid
+				JOIN period p ON p.period_number = sm.period_number AND p.schoolid = sm.schoolid AND p.year_id = sm.year_id
+				LEFT JOIN cycle_day cyd ON cyd.id = cd.cycle_day_id
+				LEFT JOIN attendance att ON att.ccid = cc.id AND att.calendar_dayid = cd.id AND att.periodid
+																																												= p.id
+				LEFT JOIN attendance_code ac ON ac.id = att.attendance_codeid
+			WHERE cd.date_value BETWEEN TRUNC(add_months(to_date('~(firstday)',
+																													 'mm/dd/yyyy'), ~[gpv:d]), 'MM') AND last_day(
+					add_months(to_date('~(firstday)', 'mm/dd/yyyy'), ~[gpv:d])) AND cc.sectionid = ~[gpv:sectionid]
+			ORDER BY p.period_number)
+		GROUP BY lastfirst, doffset)
+	GROUP BY lastfirst
+	ORDER BY lastfirst
 ;alternatecolor]
 <tr bgcolor="#edf3fe">
 <td>~(lastfirst;t)</td>
