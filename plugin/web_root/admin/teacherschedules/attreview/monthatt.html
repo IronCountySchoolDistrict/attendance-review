@@ -1,0 +1,238 @@
+~[if#pageaction.~[gpv:action]#getresults]
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Information</title>
+~[wc:commonscripts]
+<link href="/images/css/screen.css" rel="stylesheet" media="screen">
+<link href="/images/css/print.css" rel="stylesheet" media="print">
+<script type="text/javascript" src="/scripts/jquery-1.5.1.min.js"></script>
+<script type="text/javascript">
+$(function(){
+	var navtest;
+	require(['jquery'], ($) => {
+		$(function() {
+			~[tlist_sql;
+			SELECT ('013' || t.dcid) as f, TRUNC(months_between(to_date('~[date]', 'mm/dd/yyyy'), trunc(firstday, 'MM'))) AS offset
+			FROM sections s
+			JOIN terms t ON t.id = s.termid and t.schoolid = s.schoolid
+			WHERE s.id=~([03]id) AND s.schoolid=~(curschoolid)
+			]
+				var tfrn = '~(f)';
+				var offset = '~(offset)';
+			[/tlist_sql]
+			$("#attgrid").load("monthatt.html?action=getresults&sectionid=~([03]id)&frn=" + tfrn + "&d=" + offset);
+		});//end jquery.ready
+
+		function navtest(d, f) {
+			var img="<img src='" +$("#busyimage").attr("src")+"' />";
+			$(".datenav").html("Loading " + img);
+			$.get("monthatt.html?action=getresults&sectionid=~([03]id)&d="+d + "&frn=" + f, function(data){
+				var test = $("input[name='pstoken']",data);
+				if(test.size() ==1){top.location.href="/admin/pw.html";}//session timed out, load the login page.
+				$("#attgrid").html(data).fadeIn(500);
+			});
+			return false;
+		}
+	});
+</script>
+<style type="text/css" media="all">
+.col1{
+	float:left;
+	text-align:right;
+	margin-right:20px;
+}
+.col2{
+	float:left;
+	text-align:left;
+	margin-right:20px;
+}
+.ul{
+	border-bottom:1px solid black;
+}
+.hidden{
+  display:none;
+}
+.weekend{
+  display:none;
+}
+</style>
+<style type="text/css" media="print">
+.noprint{
+	display:none;
+}
+</style>
+</head><!--NoLink-->
+
+<body >
+<img id="busyimage" style="display:none;" src="/images/attendance-review/busy_blue.gif" />
+~[wc:admin_header_frame_css]<!-- breadcrumb start -->
+<a href="/admin/home.html" target="_top">~[text:psx.html.admin_teacherschedules.sched.start_page]</a>
+&gt;<a href="/admin/teacherschedules/sched.html?frn=005~([05]id)">Teacher Schedule - ~([05]lastfirst) &nbsp; ~([05]teachernumber)</a> &gt; Monthly Attendance Review
+ <!-- breadcrumb end -->
+ ~[wc:admin_navigation_frame_css]
+
+<div class="box-round">
+	<!--Start content -->
+	<h1>Monthly Attendance Review - ~([02]course_name), ~([03]expression)</h1>
+	<br />
+	<div id="attgrid"></div>
+	<br />
+	<div id="attexp">
+	Special Codes:<br />
+	N/C = No Class<span class="disclaimer"> | </span>N/S = No School<span class="disclaimer"> | </span>N/E = Not Enrolled<br /><br />
+	Attendance Codes:<br />
+	~[x:att_code_legend;if.blank.then=Blank]<br /><br /><br />
+	</div>
+	<div id="tsig">
+	<div class="col1">
+		<span style="font-size:15px;">Monthly Attendance Verfied</span>
+	</div>
+	<div class="col2" style="width:5in;">
+		<div class="ul"><span style="font-size:15px;"><br /></span></div>
+		<div>(~([05]lastfirst))</div>
+	</div>
+	<div style="clear:both;"></div>
+	</div>
+	<!--end of content -->
+</div>
+~[wc:admin_footer_frame_css]
+</body>
+</html>
+[else#pageaction]
+<div align="center" class="datenav noprint">
+~[tlist_sql;
+SELECT
+ level-1 AS d,
+ to_char(add_months(trunc(to_date('~(firstday)', 'mm/dd/yyyy'), 'MM'), 1*Level -1), 'MON YY') AS m
+  FROM dual
+  CONNECT BY Level <= MONTHS_BETWEEN(to_date('~(lastday)', 'mm/dd/yyyy'), to_date('~(firstday)', 'mm/dd/yyyy')) + 1
+  ORDER BY level
+]
+<span style="color:#333333;" class="~(d;t;if.test=0;then=hidden;else=)"> | </span>
+<span class="~(d;t;if.test=~[gpv:d];then=bold;else=;)" style="cursor:pointer;" onclick="navtest('~(d)', '~[gpv:frn]');">~(m)</span>
+[/tlist_sql]
+</div>
+<br />
+<table id="attdata" align="center" border=1 cellpadding=2 cellspacing=0 width="90%">
+<thead>
+<tr>
+<th>Student</th>
+<th>Meeting</th>
+~[tlist_sql;
+SELECT
+ CASE WHEN to_char(date_value, 'D') IN (1,7) THEN 'weekend' ELSE 'weekday' END as class,
+ to_char(date_value, 'FMMM/DD') as d,
+ to_char(date_value, 'DY') as n
+FROM calendar_day cd
+WHERE schoolid=~(curschoolid) AND to_char(date_value, 'MM/YY') =to_char(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]), 'MM/YY')
+order by date_value
+;nonemessage=<th>No School Days for this month</th>]
+<th class='~(class)'>~(d)<br />~(n)</th>
+[/tlist_sql]
+</tr>
+</thead>
+<tbody>
+~[tlist_sql;
+SELECT lastfirst,MAX(pdata),
+  max(CASE WHEN doffset=0 THEN cname ELSE null END) as c1, max(CASE WHEN doffset=0 THEN attdata ELSE null END) as d1,
+  max(CASE WHEN doffset=1 THEN cname ELSE null END) as c2, max(CASE WHEN doffset=1 THEN attdata ELSE null END) as d2,
+  max(CASE WHEN doffset=2 THEN cname ELSE null END) as c3, max(CASE WHEN doffset=2 THEN attdata ELSE null END) as d3,
+  max(CASE WHEN doffset=3 THEN cname ELSE null END) as c4, max(CASE WHEN doffset=3 THEN attdata ELSE null END) as d4,
+  max(CASE WHEN doffset=4 THEN cname ELSE null END) as c5, max(CASE WHEN doffset=4 THEN attdata ELSE null END) as d5,
+  max(CASE WHEN doffset=5 THEN cname ELSE null END) as c6, max(CASE WHEN doffset=5 THEN attdata ELSE null END) as d6,
+  max(CASE WHEN doffset=6 THEN cname ELSE null END) as c7, max(CASE WHEN doffset=6 THEN attdata ELSE null END) as d7,
+  max(CASE WHEN doffset=7 THEN cname ELSE null END) as c8, max(CASE WHEN doffset=7 THEN attdata ELSE null END) as d8,
+  max(CASE WHEN doffset=8 THEN cname ELSE null END) as c9, max(CASE WHEN doffset=8 THEN attdata ELSE null END) as d9,
+  max(CASE WHEN doffset=9 THEN cname ELSE null END) as c10, max(CASE WHEN doffset=9 THEN attdata ELSE null END) as d10,
+  max(CASE WHEN doffset=10 THEN cname ELSE null END) as c11, max(CASE WHEN doffset=10 THEN attdata ELSE null END) as d11,
+  max(CASE WHEN doffset=11 THEN cname ELSE null END) as c12, max(CASE WHEN doffset=11 THEN attdata ELSE null END) as d12,
+  max(CASE WHEN doffset=12 THEN cname ELSE null END) as c13, max(CASE WHEN doffset=12 THEN attdata ELSE null END) as d13,
+  max(CASE WHEN doffset=13 THEN cname ELSE null END) as c14, max(CASE WHEN doffset=13 THEN attdata ELSE null END) as d14,
+  max(CASE WHEN doffset=14 THEN cname ELSE null END) as c15, max(CASE WHEN doffset=14 THEN attdata ELSE null END) as d15,
+  max(CASE WHEN doffset=15 THEN cname ELSE null END) as c16, max(CASE WHEN doffset=15 THEN attdata ELSE null END) as d16,
+  max(CASE WHEN doffset=16 THEN cname ELSE null END) as c17, max(CASE WHEN doffset=16 THEN attdata ELSE null END) as d17,
+  max(CASE WHEN doffset=17 THEN cname ELSE null END) as c18, max(CASE WHEN doffset=17 THEN attdata ELSE null END) as d18,
+  max(CASE WHEN doffset=18 THEN cname ELSE null END) as c19, max(CASE WHEN doffset=18 THEN attdata ELSE null END) as d19,
+  max(CASE WHEN doffset=19 THEN cname ELSE null END) as c20, max(CASE WHEN doffset=19 THEN attdata ELSE null END) as d20,
+  max(CASE WHEN doffset=20 THEN cname ELSE null END) as c21, max(CASE WHEN doffset=20 THEN attdata ELSE null END) as d21,
+  max(CASE WHEN doffset=21 THEN cname ELSE null END) as c22, max(CASE WHEN doffset=21 THEN attdata ELSE null END) as d22,
+  max(CASE WHEN doffset=22 THEN cname ELSE null END) as c23, max(CASE WHEN doffset=22 THEN attdata ELSE null END) as d23,
+  max(CASE WHEN doffset=23 THEN cname ELSE null END) as c24, max(CASE WHEN doffset=23 THEN attdata ELSE null END) as d24,
+  max(CASE WHEN doffset=24 THEN cname ELSE null END) as c25, max(CASE WHEN doffset=24 THEN attdata ELSE null END) as d25,
+  max(CASE WHEN doffset=25 THEN cname ELSE null END) as c26, max(CASE WHEN doffset=25 THEN attdata ELSE null END) as d26,
+  max(CASE WHEN doffset=26 THEN cname ELSE null END) as c27, max(CASE WHEN doffset=26 THEN attdata ELSE null END) as d27,
+  max(CASE WHEN doffset=27 THEN cname ELSE null END) as c28, max(CASE WHEN doffset=27 THEN attdata ELSE null END) as d28,
+  max(CASE WHEN doffset=28 THEN cname ELSE null END) as c29, max(CASE WHEN doffset=28 THEN attdata ELSE null END) as d29,
+  max(CASE WHEN doffset=29 THEN cname ELSE null END) as c30, max(CASE WHEN doffset=29 THEN attdata ELSE null END) as d30,
+  max(CASE WHEN doffset=30 THEN cname ELSE null END) as c31, max(CASE WHEN doffset=30 THEN attdata ELSE null END) as d31
+FROM
+(SELECT lastfirst,MAX(cname) AS cname, doffset,to_char(replace(wm_concat(meetingexp),',','<br />')) as pdata, to_char(replace(wm_concat(attdata),',','<br />')) as attdata
+ FROM(
+  SELECT
+	s.lastfirst,
+	CASE WHEN to_char(cd.date_value, 'D') IN (1,7) THEN 'weekend' ELSE 'weekday' END as cname,
+	cd.date_value - TRUNC(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]), 'MM') AS doffset,
+	(CASE
+		WHEN  (cc.dateenrolled > cd.date_value) OR (cc.dateleft <= cd.date_value) THEN 'N/E'
+		WHEN cd.insession = 0 THEN 'N/S'
+		WHEN cyd.letter <> sm.cycle_day_letter THEN  'N/C'
+		ELSE NVL(ac.att_code,'&nbsp;')
+	  END) AS attdata,
+	sm.meeting AS meetingexp
+	FROM calendar_day cd
+	JOIN cc ON cc.schoolid = cd.schoolid
+	JOIN students s ON s.id = cc.studentid
+	JOIN section_meeting sm ON sm.sectionid = cc.sectionid
+	JOIN period p ON p.period_number = sm.period_number AND p.schoolid = sm.schoolid AND p.year_id = sm.year_id
+	LEFT JOIN cycle_day cyd ON cyd.id = cd.cycle_day_id
+	LEFT JOIN attendance att ON att.ccid = cc.id AND att.calendar_dayid = cd.id AND att.periodid = p.id
+	LEFT JOIN attendance_code ac ON ac.id = att.attendance_codeid
+	WHERE  cd.date_value BETWEEN TRUNC(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]), 'MM') AND last_day(add_months(to_date('~(firstday)','mm/dd/yyyy'), ~[gpv:d]))
+	AND cc.sectionid = ~[gpv:sectionid]
+	order by p.period_number
+	)
+Group BY lastfirst, doffset
+)
+Group BY lastfirst
+order by lastfirst
+;alternatecolor]
+<tr bgcolor="#edf3fe">
+<td>~(lastfirst;t)</td>
+<td align="right">~(pdata;t)</td>
+<td align="center" class='d1 ~(c1;t;if.test=;then=hidden;)'>~(d1;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d2 ~(c2;t;if.test=;then=hidden;)'>~(d2;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d3 ~(c3;t;if.test=;then=hidden;)'>~(d3;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d4 ~(c4;t;if.test=;then=hidden;)'>~(d4;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d5 ~(c5;t;if.test=;then=hidden;)'>~(d5;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d6 ~(c6;t;if.test=;then=hidden;)'>~(d6;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d7 ~(c7;t;if.test=;then=hidden;)'>~(d7;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d8 ~(c8;t;if.test=;then=hidden;)'>~(d8;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d9 ~(c9;t;if.test=;then=hidden;)'>~(d9;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d10 ~(c10;t;if.test=;then=hidden;)'>~(d10;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d11 ~(c11;t;if.test=;then=hidden;)'>~(d11;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d12 ~(c12;t;if.test=;then=hidden;)'>~(d12;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d13 ~(c13;t;if.test=;then=hidden;)'>~(d13;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d14 ~(c14;t;if.test=;then=hidden;)'>~(d14;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d15 ~(c15;t;if.test=;then=hidden;)'>~(d15;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d16 ~(c16;t;if.test=;then=hidden;)'>~(d16;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d17 ~(c17;t;if.test=;then=hidden;)'>~(d17;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d18 ~(c18;t;if.test=;then=hidden;)'>~(d18;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d19 ~(c19;t;if.test=;then=hidden;)'>~(d19;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d20 ~(c20;t;if.test=;then=hidden;)'>~(d20;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d21 ~(c21;t;if.test=;then=hidden;)'>~(d21;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d22 ~(c22;t;if.test=;then=hidden;)'>~(d22;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d23 ~(c23;t;if.test=;then=hidden;)'>~(d23;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d24 ~(c24;t;if.test=;then=hidden;)'>~(d24;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d25 ~(c25;t;if.test=;then=hidden;)'>~(d25;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d26 ~(c26;t;if.test=;then=hidden;)'>~(d26;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d27 ~(c27;t;if.test=;then=hidden;)'>~(d27;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d28 ~(c28;t;if.test=;then=hidden;)'>~(d28;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d29 ~(c29;t;if.test=;then=hidden;)'>~(d29;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d30 ~(c30;t;if.test=;then=hidden;)'>~(d30;t;if.test=;then=&nbsp;)</td>
+<td align="center" class='d31 ~(c31;t;if.test=;then=hidden;)'>~(d31;t;if.test=;then=&nbsp;)</td>
+</tr>
+</tbody>
+[/tlist_sql]
+</table>
+[/if#pageaction]

@@ -1,0 +1,195 @@
+~[if#pageaction.~[gpv:action]#getresults]
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Information</title>
+~[wc:commonscripts]
+<link href="/images/css/screen.css" rel="stylesheet" media="screen">
+<link href="/images/css/print.css" rel="stylesheet" media="print">
+<script type="text/javascript" language="javascript">
+	var navweek;
+	require(['jquery'], ($) => {
+		$(function(){
+			~[tlist_sql;
+			SELECT ('013' || t.dcid) as f, ((TRUNC(to_date('~[date]', 'mm/dd/yyyy'),'D')- trunc(firstday, 'D'))/7) AS offset
+			FROM sections s
+			JOIN terms t ON t.id = s.termid and t.schoolid = s.schoolid
+			WHERE s.id=~([03]id) AND s.schoolid=~(curschoolid)
+			]
+				var tfrn = '~(f)';
+				var offset = '~(offset)';
+			[/tlist_sql]
+			$("#attgrid").load("weekatt.html?action=getresults&sectionid=~([03]id)&frn=" + tfrn + "&w=" + offset);
+		});//end jquery.ready
+
+
+		navweek = function(week, f) {
+			var img="<img src='" +$("#busyimage").attr("src")+"' />";
+			$(".datenav").html("Loading " + img);
+			$.get("weekatt.html?action=getresults&sectionid=~[gpv:sectionid]&w="+week + "&frn=" + f, function(data){
+			var test = $("input[name='pstoken']",data);
+			if(test.size() ==1){top.location.href="/teachers/pw.html";}
+				$("#attgrid").html(data).fadeIn(500);
+			});
+			return false;
+		}
+	});
+</script>
+<style type="text/css" media="all">
+.col1{
+	float:left;
+	text-align:right;
+	margin-right:20px;
+}
+.col2{
+	float:left;
+	text-align:left;
+	margin-right:20px;
+}
+.ul{
+	border-bottom:1px solid black;
+}
+.hidden{
+  display:none;
+}
+</style>
+<style type="text/css" media="print">
+body{
+	width:8.5in;
+	height:11in;
+}
+.noprint{
+	display:none;
+}
+</style>
+</head><!--NoLink-->
+
+<body>
+<img id="busyimage" style="display:none;" src="/images/attendance-review/busy_blue.gif" />
+~[wc:teachers_header_fr_css]
+
+<div class="box-round">
+
+<!--Start content -->
+<h1>Weekly Attendance Review - ~([02]course_name), ~([03]expression)</h1>
+
+<div id="attgrid"></div>
+<br />
+<table align="center" border="0" cellspacing="0" cellpadding="0" width="90%">
+<tr>
+<td>Attendance Codes:<br>~[x:att_code_legend;if.blank.then=Blank]<br><br></td>
+</tr>
+</table>
+<br />
+<div id="tsig">
+<div class="col1">
+	<span style="font-size:15px;">Weekly Attendance Verfied</span>
+</div>
+<div class="col2" style="width:5in;">
+	<div class="ul"><span style="font-size:15px;"><br /></span></div>
+	<div>(~([05]lastfirst))</div>
+</div>
+<div style="clear:both;"></div>
+</div>
+<!--end of content -->
+
+</div>
+~[wc:teachers_footer_fr_css]
+
+</body>
+</html>
+[else#pageaction]
+<div align="center" class="datenav noprint">
+
+</div>
+<div align="center" class="datenav noprint">
+
+<span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];4), '~[gpv:frn]');"><img src="/images/btn_left_arrow.gif" border="0" alt="back4"  />&nbsp;Back 4 weeks</span>
+<span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];1), '~[gpv:frn]');"><img src="/images/btn_left_arrow.gif" border="0" alt="back1"  />&nbsp;Previous week</span>
+ | <span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];-1), '~[gpv:frn]');">Next week&nbsp;<img src="/images/btn_right_arrow.gif" border="0" alt="next1" /></span>
+<span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];-4), '~[gpv:frn]');">Forward 4 weeks&nbsp;<img src="/images/btn_right_arrow.gif" border="0" alt="next4" /></span>
+</div>
+<table align="center" border="1" cellpadding="2" cellspacing="0" width="90%">
+<thead>
+~[tlist_sql;
+SELECT
+  TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+1 AS m,
+  TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+2 AS t,
+  TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+3 AS w,
+  TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+4 AS th,
+  TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+5 AS f
+FROM DUAL
+]
+<tr>
+<th><br />Name</th>
+<th><br />Meeting</th>
+<th>Monday<br />~(m;d)</th>
+<th>Tuesday<br />~(t;d)</th>
+<th>Wednesday<br />~(w;d)</th>
+<th>Thursday<br />~(th;d)</th>
+<th>Friday<br />~(f;d)</th>
+</tr>
+[/tlist_sql]
+</thead>
+<tbody>
+~[tlist_sql;
+SELECT lastfirst,MAX(pdata),
+  max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+1, attdata,	null)) as att1day,
+  max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+2, attdata,	null)) as att2day,
+  max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+3, attdata,	null)) as att3day,
+  max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+4, attdata,	null)) as att4day,
+  max(decode(date_value, TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+5, attdata,	null)) as att5day
+FROM
+(SELECT lastfirst,date_value,to_char(listagg(meetingexp, '<br />') within group(order by meetingexp)) as pdata, to_char(listagg(attdata, '<br />') within group(order by attdata)) as attdata
+FROM(
+	SELECT
+	  s.lastfirst,
+	  cd.date_value,
+	  (CASE
+	    WHEN (cc.dateenrolled > cd.date_value) OR (cc.dateleft <= cd.date_value) THEN 'Not Enrolled'
+		WHEN cd.insession = 0 THEN 'Not in Session'
+		WHEN cyd.letter <> sm.cycle_day_letter THEN 'Not Scheduled'
+		ELSE NVL(ac.att_code,'&nbsp;')
+	  END) AS attdata,
+    sm.meeting as meetingexp
+	FROM CC cc
+	JOIN calendar_day cd ON cd.schoolid = cc.schoolid
+	JOIN Students s ON cc.StudentID = s.ID
+	JOIN section_meeting sm ON sm.sectionid = cc.sectionid
+	JOIN period p ON p.period_number = sm.period_number AND p.schoolid = sm.schoolid AND p.year_id = sm.year_id
+	LEFT JOIN cycle_day cyd ON cyd.id = cd.cycle_day_id
+	LEFT JOIN attendance att ON cc.id = att.ccid AND  cd.id = att.calendar_dayid AND att.periodid = p.id AND att.att_mode_code= 'ATT_ModeMeeting'
+	LEFT JOIN attendance_code ac ON ac.id = att.attendance_codeid
+
+	WHERE cd.date_value BETWEEN TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+1 AND TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+5
+	  AND cc.sectionid =~[gpv:sectionid]
+	  AND cc.dateenrolled < TRUNC(to_date('~[f.add;~(firstday);~[f.mult;~[gpv:w];7]]','mm/dd/yyyy'), 'D')+6
+	  order by p.period_number
+)
+Group BY lastfirst, date_value
+)
+Group BY lastfirst
+order by lastfirst
+;alternatecolor]
+
+<tr bgcolor="#edf3fe">
+<td>~(lastfirst;t)</td>
+<td align="right">~(pdata;t)</td>
+<td align="center">~(att1day;t;if.test=;then=&nbsp;)</td>
+<td align="center">~(att2day;t;if.test=;then=&nbsp;)</td>
+<td align="center">~(att3day;t;if.test=;then=&nbsp;)</td>
+<td align="center">~(att4day;t;if.test=;then=&nbsp;)</td>
+<td align="center">~(att5day;t;if.test=;then=&nbsp;)</td>
+
+</tr>
+[/tlist_sql]
+</tbody>
+</table>
+
+<div align="center" class="datenav noprint">
+<span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];4), '~[gpv:frn]');"><img src="/images/btn_left_arrow.gif" border="0" alt="back4"  />&nbsp;Back 4 weeks</span>
+<span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];1), '~[gpv:frn]');"><img src="/images/btn_left_arrow.gif" border="0" alt="back1"  />&nbsp;Previous week</span>
+ | <span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];-1), '~[gpv:frn]');">Next week&nbsp;<img src="/images/btn_right_arrow.gif" border="0" alt="next1" /></span>
+<span style="cursor:pointer;"  onclick="navweek(~(f.sub;~[gpv:w];-4), '~[gpv:frn]');">Forward 4 weeks&nbsp;<img src="/images/btn_right_arrow.gif" border="0" alt="next4" /></span>
+</div>
+[/if#pageaction]

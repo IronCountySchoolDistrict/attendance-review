@@ -1,0 +1,118 @@
+<!-- attendance-review insertion point start -->
+<script type="text/template" id="teacher-sections-template">
+  <br>
+  <!-- Display teacher's sections in other schools  -->
+  <div id="otherschooltable" class="hide">
+    <h2 style="border-top-left-radius:0;border-top-right-radius:0;">~[text:psx.html.admin_teacherschedules.sched.other_schools]</h2>
+    <table id="teacherOtherSchoolsSectionTable">
+      <tr>
+        <th>~[text:psx.html.admin_teacherschedules.sched.expression]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.term]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.course_]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.course]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.sec_]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.room]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.enrollment]</th>
+        <th>~[text:psx.html.admin_teacherschedules.sched.schoolname]</th>
+      </tr>
+
+      <tr class="otherschoolrows" bgcolor="#edf3fe" sectionid="~(id)">
+        ~[tlist;sections;coteachscheduleotherschools=~([05]id);alternatecolor]
+        <td>~(*class_expression data="abbr" format="expression")</td>
+        <td>~(reltermabbr)</td>
+        <td>~(course_number)</td>
+        <td>~(relcoursename;codemap=CourseName;id=~(course_number))</td>
+        <td>~(section_number)&nbsp;~(coteachIcon;-)</td>
+        <td>~(room)</td>
+        <td>~(no_of_students)</td>
+        <td>~(relschoolname)</td>
+      </tr>
+    </table>
+  </div>
+
+  <form name="sched_form" action="/admin/teacherschedules/sched.html?frn=~(gpv.frn;urlencode)&dispic=~(gpv.dispic;urlencode)" method="post">
+    <input type="hidden" name="showOnlyActiveRole" value="0" />
+  </form>
+</script>
+
+<script>
+  require.config({
+    paths: {
+      'jquery.cookie': '/scripts/jquery.cookie'
+    }
+  });
+
+  require(['jquery', 'jquery.cookie'], ($) => {
+    var activeOnlyCookieName = 'show_active_only';
+    var today_str = '~[long.date]';
+    var n = today_str.indexOf(',');
+    today_str = today_str.substr(n + 1);
+    var today = Date.parse(today_str);
+    var termbegdate = parseDate('~[x:termbegdateYYYYMMDD]', 'YYYYMMDD');
+    var termenddate = parseDate('~[x:termenddateYYYYMMDD]', 'YYYYMMDD');
+
+    function parseDate(str) {
+      var y = str.substr(0, 4),
+        m = str.substr(4, 2),
+        d = str.substr(6, 2);
+      return (new Date(y, (m - 1), d)).setHours(0, 0, 0, 0); // month is 0 based
+    }
+
+
+    function do_pageLoad() {
+      var els = document.getElementsByName("el_attendance0");
+      if (els != null) {
+        for (var i = 0; i < els.length; i++)
+          els[i].innerHTML = '&nbsp;';
+      }
+
+      if (today >= termbegdate && today <= termenddate) { // if today is with term date range then show check box
+
+        var cookieVal = '';
+        if ($ && $.cookie) {
+          cookieVal = $.cookie(activeOnlyCookieName);
+        }
+        if (cookieVal === "1") {
+          $("#id_cbshowActive").attr('checked', 'checked');
+
+          url = $("#id_selectstuds").attr("href") + '&showOnlyActiveRole=1';
+          $("#id_selectstuds").attr("href", url);
+
+        }
+        $("#id_chkdiv").show();
+      } else { // hide check box
+        $("#id_chkdiv").hide();
+      }
+
+      setUICookie(activeOnlyCookieName, null);
+    }
+
+    function checkbox_click(checked) {
+      setUICookie(activeOnlyCookieName, (checked ? "1" : null));
+      if (checked)
+        document.sched_form.showOnlyActiveRole.value = "1";
+      else
+        document.sched_form.showOnlyActiveRole.value = "0";
+      document.sched_form.submit();
+    }
+
+    function insert_template() {
+      var template = $('#teacher-sections-template').html();
+      var insertSelector = $('#teacherSectionTable');
+      insertSelector.after(template);
+    }
+
+    $(document).ready(function() {
+      insert_template();
+      do_pageLoad();
+
+      // Show the Other School table if there are records
+      // Then show Current School subheading as well
+      if ($('.otherschoolrows').length) {
+        $('#otherschooltable').removeClass('hide');
+        $('#currentschooltablesubheading').removeClass('hide');
+      }
+    });
+  });
+</script>
+<!-- attendance-review insertion point end -->

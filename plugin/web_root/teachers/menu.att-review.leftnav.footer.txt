@@ -1,0 +1,21 @@
+<!-- attendance-review insertion point start -->
+<script type="text/template" id="attendance-review-template">
+  <br />
+  <a href="weekatt.html?sectionid=~[gpv:sectionid]&frn=~(frn)">Weekly Attendance Review</a>
+  <br />
+  <a href="monthatt.html?sectionid=~[gpv:sectionid]&frn=~(frn)">Monthly Attendance Review</a>
+</script>
+
+
+<script>
+  require.config({
+    paths: {
+      attendanceReview: '/scripts/attendance-review/attendance-review'
+    }
+  });
+
+  require(['attendanceReview'], (attendanceReview) => {
+    attendanceReview.init();
+  });
+</script>
+<!-- attendance-review insertion point end -->
